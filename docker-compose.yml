@@ -1,4 +1,4 @@
-name: h360tk_demo
+name: asmeranda
 
 # Produksi VM Kominfotik: port 80/443 tetap dikelola Nginx Proxy Manager.
 services:
@@ -45,7 +45,8 @@ services:
       args:
         DOCKER_MODE: "true"
         DOCKER_API_BASE: http://backend:8000
-        NEXT_PUBLIC_API_BASE_PATH: /api/v1
+        NEXT_PUBLIC_BASE_PATH: /asmeranda
+        NEXT_PUBLIC_API_BASE_PATH: /asmeranda/api/v1
         HTTP_PROXY: ${HTTP_PROXY:-}
         HTTPS_PROXY: ${HTTPS_PROXY:-}
         NO_PROXY: localhost,127.0.0.1,backend,web,asmeranda-backend,asmeranda-web
@@ -55,7 +56,8 @@ services:
       NODE_ENV: production
       DOCKER_MODE: "true"
       DOCKER_API_BASE: http://backend:8000
-      NEXT_PUBLIC_API_BASE_PATH: /api/v1
+      NEXT_PUBLIC_BASE_PATH: /asmeranda
+      NEXT_PUBLIC_API_BASE_PATH: /asmeranda/api/v1
     networks:
       - internal
     depends_on:

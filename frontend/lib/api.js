@@ -8,6 +8,7 @@
  * - Otomatis menyertakan Authorization Bearer header jika token tersedia
  */
 
+const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_PATH || "/api/v1";
 const TOKEN_KEY = "asmeranda_auth_token";
 
@@ -143,7 +144,7 @@ export async function apiUpload(path, formData, onProgress) {
 
 export const api = {
   // Health — endpoint di root (/health), bukan di /api/v1/health
-  health: () => fetch("/health").then((r) => r.json()),
+  health: () => fetch(`${APP_BASE_PATH}/health`).then((r) => r.json()),
   
   // Auth
   auth: {
@@ -196,7 +197,7 @@ export const api = {
     const wsBase = typeof window !== "undefined"
       ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`
       : "ws://localhost:8000";
-    const wsUrl = `${wsBase}/api/v1/ws/${id}`;
+    const wsUrl = `${wsBase}${APP_BASE_PATH}/api/v1/ws/${id}`;
     
     const ws = new WebSocket(wsUrl);
     ws.onmessage = (event) => {

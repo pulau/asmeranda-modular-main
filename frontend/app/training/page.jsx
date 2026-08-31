@@ -21,6 +21,7 @@ const MODELS = [
 ];
 
 const CV_METHODS = ["kfold", "stratified", "loo", "timeseries", "none"];
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_PATH || "/api/v1";
 
 const HYPERPARAM_TEMPLATES = {
   RandomForest: {
@@ -184,7 +185,7 @@ export default function TrainingPage() {
     setError(null);
     setLearningCurveResult(null);
     try {
-      const r = await fetch('/api/v1/training/learning-curve', {
+      const r = await fetch(`${API_BASE}/training/learning-curve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -209,7 +210,7 @@ export default function TrainingPage() {
     setError(null);
     setComparisonResult(null);
     try {
-      const r = await fetch('/api/v1/training/compare', {
+      const r = await fetch(`${API_BASE}/training/compare`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

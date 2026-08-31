@@ -105,7 +105,8 @@ export default function HomePage() {
 
     const checkHealth = async () => {
       try {
-        const r = await fetch("/health");
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+        const r = await fetch(`${basePath}/health`);
         if (cancelled) return;
         if (r.ok) {
           const data = await r.json();

@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  // Aplikasi dipublikasikan sebagai sub-path di domain VM, mis. /asmeranda.
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || undefined,
+
   // Standalone output untuk Docker image yang lebih kecil
   output: "standalone",
 

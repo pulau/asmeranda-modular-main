@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useWorkflow } from '@/lib/workflow-store';
 import { useT } from '@/lib/i18n';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/v1';
+
 export default function AdvancedMLPage() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
@@ -27,7 +29,7 @@ export default function AdvancedMLPage() {
   const handleUMAP = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/advanced-ml/umap', {
+      const response = await fetch(`${API_BASE}/advanced-ml/umap`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -51,7 +53,7 @@ export default function AdvancedMLPage() {
   const handleHDBSCAN = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/advanced-ml/hdbscan', {
+      const response = await fetch(`${API_BASE}/advanced-ml/hdbscan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -75,7 +77,7 @@ export default function AdvancedMLPage() {
   const handleAnomalyDetection = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/advanced-ml/anomaly-detection', {
+      const response = await fetch(`${API_BASE}/advanced-ml/anomaly-detection`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +101,7 @@ export default function AdvancedMLPage() {
   const handleForecast = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/advanced-ml/forecast', {
+      const response = await fetch(`${API_BASE}/advanced-ml/forecast`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -123,7 +125,7 @@ export default function AdvancedMLPage() {
   const handleMissingValues = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/advanced-ml/handle-missing-values', {
+      const response = await fetch(`${API_BASE}/advanced-ml/handle-missing-values`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -148,7 +150,7 @@ export default function AdvancedMLPage() {
   const handleDetectOutliers = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/advanced-ml/detect-outliers', {
+      const response = await fetch(`${API_BASE}/advanced-ml/detect-outliers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
