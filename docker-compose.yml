@@ -1,87 +1,87 @@
+name: h360tk_demo
+
+# Produksi VM Kominfotik: port 80/443 tetap dikelola Nginx Proxy Manager.
 services:
-  # Backend FastAPI Service
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: localhost,127.0.0.1,backend,web,asmeranda-backend,asmeranda-web
     container_name: asmeranda-backend
-    ports:
-      - "8000:8000"
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/app
-      - ASMERANDA_HOST=0.0.0.0
-      - ASMERANDA_PORT=8000
-      - ASMERANDA_DATA_DIR=/app/data
-      - ASMERANDA_LOG_LEVEL=INFO
-      - ASMERANDA_MAX_UPLOAD_SIZE_MB=100
-      - ASMERANDA_ALLOWED_HOSTS=["*"]
-      - ASMERANDA_CORS_ORIGINS=["*"]
-    volumes:
-      - ./data:/app/data
-      - ./backend:/app/backend
-    networks:
-      - asmeranda-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      start_period: 10s
-      retries: 5
     restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+      ASMERANDA_HOST: 0.0.0.0
+      ASMERANDA_PORT: "8000"
+      ASMERANDA_DATA_DIR: /app/data
+      ASMERANDA_LOG_LEVEL: ${ASMERANDA_LOG_LEVEL:-INFO}
+      ASMERANDA_DEBUG: "false"
+      ASMERANDA_PRODUCTION_MODE: "true"
+      ASMERANDA_MAX_UPLOAD_SIZE_MB: ${ASMERANDA_MAX_UPLOAD_SIZE_MB:-200}
+      ASMERANDA_ALLOWED_HOSTS: ${ASMERANDA_ALLOWED_HOSTS:-["*"]}
+      ASMERANDA_CORS_ORIGINS: ${ASMERANDA_CORS_ORIGINS:-["https://your-domain.example"]}
+      ASMERANDA_JWT_SECRET: ${ASMERANDA_JWT_SECRET:?Set ASMERANDA_JWT_SECRET in .env}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: localhost,127.0.0.1,backend,web,asmeranda-backend,asmeranda-web
+    volumes:
+      - asmeranda_data:/app/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
 
-  # Frontend Next.js Service
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - DOCKER_MODE=true
-        - DOCKER_API_BASE=http://backend:8000
-        - NEXT_PUBLIC_API_BASE=http://backend:8000
-        - NEXT_PUBLIC_API_BASE_PATH=/api/v1
+        DOCKER_MODE: "true"
+        DOCKER_API_BASE: http://backend:8000
+        NEXT_PUBLIC_API_BASE_PATH: /api/v1
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: localhost,127.0.0.1,backend,web,asmeranda-backend,asmeranda-web
     container_name: asmeranda-frontend
-    ports:
-      - "3000:3000"
+    restart: unless-stopped
     environment:
-      - NODE_ENV=production
-      - DOCKER_MODE=true
-      - DOCKER_API_BASE=http://backend:8000
-      - NEXT_PUBLIC_API_BASE=http://backend:8000
-      - NEXT_PUBLIC_API_BASE_PATH=/api/v1
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+      NODE_ENV: production
+      DOCKER_MODE: "true"
+      DOCKER_API_BASE: http://backend:8000
+      NEXT_PUBLIC_API_BASE_PATH: /api/v1
     networks:
-      - asmeranda-network
+      - internal
     depends_on:
       backend:
         condition: service_healthy
-    restart: unless-stopped
 
-  # Nginx Reverse Proxy (Optional - for production)
-  nginx:
-    image: nginx:alpine
-    container_name: asmeranda-nginx
-    ports:
-      - "80:80"
-      - "443:443"
+  # Target upstream Nginx Proxy Manager: http://asmeranda-web:80
+  web:
+    image: nginx:1.27-alpine
+    container_name: asmeranda-web
+    restart: unless-stopped
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
     networks:
-      - asmeranda-network
+      - internal
     depends_on:
       backend:
         condition: service_healthy
       frontend:
         condition: service_started
-    restart: unless-stopped
 
 networks:
-  asmeranda-network:
-    driver: bridge
+  internal:
+    external: true
+    name: ${COMINFOTIK_DOCKER_NETWORK:-internal}
 
 volumes:
-  data:
+  asmeranda_data:
+    name: asmeranda_data

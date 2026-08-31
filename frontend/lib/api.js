@@ -190,16 +190,13 @@ export const api = {
   edaPaginatedData: (id, page = 1, size = 50) =>
     apiFetch(`/eda/${id}/data?page=${page}&size=${size}`),
   
-  // WebSocket — koneksi langsung ke backend (Next.js tidak bisa proxy WS)
+  // WebSocket memakai origin yang sama agar tetap bekerja di belakang reverse
+  // proxy produksi; Nginx meneruskan /api/ ke backend dan menangani upgrade WS.
   connectWebSocket: (id, onMessage) => {
-    const backendHttp = process.env.NEXT_PUBLIC_API_BASE || 
-      (typeof window !== "undefined" 
-        ? `${window.location.protocol}//${window.location.hostname}:8000`
-        : "http://localhost:8000");
-    
-    const wsUrl = backendHttp
-      .replace(/^https:/, "wss:")
-      .replace(/^http:/, "ws:") + `/api/v1/ws/${id}`;
+    const wsBase = typeof window !== "undefined"
+      ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`
+      : "ws://localhost:8000";
+    const wsUrl = `${wsBase}/api/v1/ws/${id}`;
     
     const ws = new WebSocket(wsUrl);
     ws.onmessage = (event) => {
