@@ -64,21 +64,6 @@ services:
       backend:
         condition: service_healthy
 
-  # Target upstream Nginx Proxy Manager: http://asmeranda-web:80
-  web:
-    image: nginx:1.27-alpine
-    container_name: asmeranda-web
-    restart: unless-stopped
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    networks:
-      - internal
-    depends_on:
-      backend:
-        condition: service_healthy
-      frontend:
-        condition: service_started
-
 networks:
   internal:
     external: true
