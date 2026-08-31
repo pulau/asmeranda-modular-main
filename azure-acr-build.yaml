@@ -1,0 +1,22 @@
+# Azure Container Registry build configuration
+apiVersion: 2019-04-01
+location: eastus
+properties:
+  timeout: 3600
+  platform:
+    os: linux
+    cpu: 2
+    variant: v8
+  dockerFilePath: Dockerfile.azure
+  imageNames:
+    - asmeranda-ml-app:latest
+    - asmeranda-ml-app:{buildNumber}
+  isPushEnabled: true
+  sourceLocation: .
+  buildArguments:
+    - name: BUILD_DATE
+      value: {buildDate}
+    - name: BUILD_VERSION
+      value: {buildVersion}
+    - name: VCS_REF
+      value: {vcsRef}

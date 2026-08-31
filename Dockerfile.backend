@@ -1,0 +1,41 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+# System dependencies untuk kompilasi native packages
+# (LightGBM, XGBoost, CatBoost, Prophet, UMAP, HDBSCAN, cryptography)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc \
+        g++ \
+        libgomp1 \
+        libffi-dev \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python deps — copy the backend requirements file explicitly so the
+# canonical Docker stack resolves the correct app environment.
+COPY ["backend/requirements-backend.txt", "/tmp/requirements-backend.txt"]
+RUN pip install -r /tmp/requirements-backend.txt
+
+# Copy seluruh project source
+COPY . /app
+
+# Buat direktori data
+RUN mkdir -p /app/data /app/data/models /app/data/states /app/logs
+
+EXPOSE 8000
+
+ENV ASMERANDA_HOST=0.0.0.0 \
+    ASMERANDA_PORT=8000
+
+# Healthcheck internal
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"
+
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

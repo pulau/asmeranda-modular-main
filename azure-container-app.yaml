@@ -1,0 +1,124 @@
+# Asmeranda AI - Azure Container App (full stack)
+#
+# Mendefinisikan 1 Container App dengan 2 container:
+#   - backend  : FastAPI (uvicorn) di port 8000 (internal)
+#   - frontend : Next.js (npx next start) di port 3000 (ekspos publik)
+#
+# Ingress eksternal mengarah ke container `frontend` (port 3000).
+# Frontend panggil backend lewat service discovery Container Apps:
+#   - DNS internal: http://backend:8000
+#   - Atau via path /api/* yang di-rewrite oleh frontend (lihat next.config.js)
+
+apiVersion: appcontainerapps.io/v1
+kind: ContainerApp
+metadata:
+  name: asmeranda
+  labels:
+    app: asmeranda
+    tier: fullstack
+spec:
+  revisionMode: Single
+  ingress:
+    external: true
+    targetPort: 3000
+    allowInsecure: false
+    traffic:
+      - latestRevision: true
+        weight: 100
+    transport: auto
+
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 3000
+      transport: auto
+      allowInsecure: false
+      traffic:
+        - latestRevision: true
+          weight: 100
+
+  template:
+    containers:
+      # -----------------------------------------------------------------
+      # Container 1: Backend FastAPI
+      # -----------------------------------------------------------------
+      - name: backend
+        image: {{IMAGE}}
+        command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+        resources:
+          cpu: 1.0
+          memory: 2.0Gi
+        env:
+          - name: ASMERANDA_HOST
+            value: 0.0.0.0
+          - name: ASMERANDA_PORT
+            value: "8000"
+          - name: ASMERANDA_DATA_DIR
+            value: /app/data
+          - name: ASMERANDA_LOG_LEVEL
+            value: INFO
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          - name: PYTHONPATH
+            value: /app
+        probes:
+          - type: Liveness
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+          - type: Readiness
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+
+      # -----------------------------------------------------------------
+      # Container 2: Frontend Next.js
+      # -----------------------------------------------------------------
+      - name: frontend
+        image: {{IMAGE}}
+        command: ["npx", "next", "start", "-p", "3000", "-H", "0.0.0.0"]
+        resources:
+          cpu: 0.5
+          memory: 1.0Gi
+        env:
+          - name: NODE_ENV
+            value: production
+          - name: PORT
+            value: "3000"
+          - name: NEXT_TELEMETRY_DISABLED
+            value: "1"
+          - name: NEXT_PUBLIC_API_BASE_PATH
+            value: /api/v1
+        probes:
+          - type: Liveness
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+          - type: Readiness
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+
+    scale:
+      minReplicas: 1
+      maxReplicas: 3
+      rules:
+        - name: http-rule
+          http:
+            metadata:
+              concurrentRequests: "50"
+
+  workloadProfileName: Consumption

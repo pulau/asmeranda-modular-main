@@ -1,0 +1,42 @@
+[flake8]
+# Flake8 linting configuration untuk Asmeranda
+
+# Maximum line length (Black uses 100)
+max-line-length = 100
+
+# Directories to exclude
+exclude = 
+    .git
+    __pycache__
+    .venv
+    venv
+    build
+    dist
+    *.egg-info
+    htmlcov
+    node_modules
+    .pytest_cache
+    .mypy_cache
+    migrations
+
+# Error codes to ignore
+ignore = 
+    E203  # Whitespace before ':' (conflicts with Black)
+    W503  # Line break before binary operator (conflicts with Black)
+    E501  # Line too long (handled by Black, not by flake8)
+    W504  # Line break after binary operator
+
+# Per-file ignores
+per-file-ignores =
+    __init__.py:F401  # Imported but unused (ok in __init__)
+    backend/tests/*:F841  # Local variable assigned but never used (ok in tests)
+    backend/tests/*:ARG001  # Unused arguments in fixtures
+
+# Count errors
+count = True
+
+# Show source code untuk errors
+show-source = True
+
+# Show statistics
+statistics = True

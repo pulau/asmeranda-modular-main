@@ -1,0 +1,115 @@
+# Asmeranda AI - Azure Container Apps Dockerfile (multi-stage).
+#
+# Tahapan:
+#   1. frontend-builder   - Build Next.js (Node 20)
+#   2. backend-builder    - Install deps Python + compile wheels
+#   3. runtime            - Gabungkan frontend (static) + backend (uvicorn),
+#                           jalankan via supervisord (uvicorn di 8000,
+#                           next start di 3000).
+#
+# Container mengekspos 3000 ke publik (frontend); backend di 8000
+# diakses internal dari container lain / dari ingress Container App.
+
+# ---------------------------------------------------------------------------
+# Stage 1: Frontend (Next.js)
+# ---------------------------------------------------------------------------
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/frontend
+
+# Cache deps
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm install --no-audit --no-fund
+
+# Build
+COPY frontend/ ./
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npx next build
+
+# ---------------------------------------------------------------------------
+# Stage 2: Backend (Python) - wheel cache
+# ---------------------------------------------------------------------------
+FROM python:3.11-slim AS backend-builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc \
+        g++ \
+        libgomp1 \
+        libopenblas-dev \
+        liblapack-dev \
+        gfortran \
+        && rm -rf /var/lib/apt/lists/*
+
+COPY docker_requirements.txt ./requirements.txt
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -r requirements.txt
+
+# ---------------------------------------------------------------------------
+# Stage 3: Runtime - gabungkan frontend (build) + backend (uvicorn)
+# ---------------------------------------------------------------------------
+FROM python:3.11-slim AS runtime
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    ASMERANDA_HOST=0.0.0.0 \
+    ASMERANDA_PORT=8000 \
+    NEXT_PUBLIC_API_BASE_PATH=/api/v1 \
+    PORT=3000
+
+WORKDIR /app
+
+# System deps + Node 20 + supervisord
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgomp1 \
+        libopenblas-base \
+        curl \
+        supervisor \
+        && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+        && apt-get install -y --no-install-recommends nodejs \
+        && rm -rf /var/lib/apt/lists/*
+
+# Backend - salin dari builder
+COPY --from=backend-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend-builder /usr/local/bin /usr/local/bin
+
+# Project source
+COPY . /app
+
+# Frontend static build + node_modules (production only)
+COPY --from=frontend-builder /app/frontend/.next /app/frontend/.next
+COPY --from=frontend-builder /app/frontend/public /app/frontend/public
+COPY --from=frontend-builder /app/frontend/package.json /app/frontend/package.json
+COPY --from=frontend-builder /app/frontend/next.config.js /app/frontend/next.config.js
+COPY --from=frontend-builder /app/frontend/node_modules /app/frontend/node_modules
+
+# Runtime dirs
+RUN mkdir -p /app/data /app/models /app/uploads /app/logs && \
+    chmod -R 755 /app/data /app/models /app/uploads /app/logs
+
+# Non-root user
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# supervisord config (uvicorn + next start)
+COPY azure/supervisord.conf /etc/supervisor/conf.d/asmeranda.conf
+
+# Expose ports
+EXPOSE 3000 8000
+
+# Healthcheck - frontend
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD curl -fsS http://localhost:3000/ || exit 1
+
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/asmeranda.conf"]

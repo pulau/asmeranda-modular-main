@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+.venv
+venv
+.git
+.gitignore
+data
+*.log
+.env
+.env.local
+.idea
+.vscode
+tests_*.py
+.streamlit

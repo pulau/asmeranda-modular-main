@@ -1,0 +1,36 @@
+# Build artefacts
+.git
+.gitignore
+.venv
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+node_modules/
+.next/
+out/
+data/
+*.log
+.env
+.env.local
+.env.production
+.env.development
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Test artefacts
+tests_*.py
+.pytest_cache/
+
+# Streamlit legacy (masih di-support tapi tidak dipakai di Docker)
+.streamlit/
+
+# Docker
+Dockerfile.backend
+Dockerfile
+docker-compose.yml
+.dockerignore

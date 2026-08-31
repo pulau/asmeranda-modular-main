@@ -1,0 +1,142 @@
+# Pre-commit hooks configuration untuk Asmeranda
+# Setup: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # ──────────────────────────────────────────────────────────
+  # General file checks
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        description: Remove trailing whitespace
+        
+      - id: end-of-file-fixer
+        name: Fix end of file
+        description: Ensure files end with newline
+        
+      - id: check-yaml
+        name: Check YAML
+        description: Check YAML files for syntax
+        
+      - id: check-json
+        name: Check JSON
+        description: Check JSON files for syntax
+        
+      - id: check-toml
+        name: Check TOML
+        description: Check TOML files for syntax
+        
+      - id: check-added-large-files
+        name: Check for large files
+        description: Prevent giant files from being committed
+        args: ['--maxkb=10000']
+        
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+        description: Check for files that would conflict in a merge
+        
+      - id: debug-statements
+        name: Debug statements
+        description: Check for debugger imports and breakpoints
+        
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+        description: Fix mixed line ending (CRLF vs LF)
+        args: ['--fix=lf']
+
+  # ──────────────────────────────────────────────────────────
+  # Python: Code formatting (Black)
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        name: Black
+        description: Format code with Black
+        language_version: python3.10
+        args: ['--line-length=100']
+
+  # ──────────────────────────────────────────────────────────
+  # Python: Import sorting (isort)
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort
+        description: Sort Python imports
+        args: ['--profile=black', '--line-length=100']
+
+  # ──────────────────────────────────────────────────────────
+  # Python: Linting (flake8)
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        name: flake8
+        description: Lint Python code
+        args: ['--max-line-length=100', '--extend-ignore=E203,W503']
+        exclude: ^venv/
+
+  # ──────────────────────────────────────────────────────────
+  # Python: Type checking (mypy)
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.4.1
+    hooks:
+      - id: mypy
+        name: mypy
+        description: Static type checker for Python
+        args: ['--ignore-missing-imports', '--follow-imports=skip']
+        additional_dependencies: ['types-all']
+        exclude: ^(venv/|backend/tests/)
+
+  # ──────────────────────────────────────────────────────────
+  # Python: Security (bandit)
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: bandit
+        description: Find common security issues in Python code
+        args: ['-ll']  # Only report medium+ severity
+        exclude: ^(venv/|backend/tests/)
+
+  # ──────────────────────────────────────────────────────────
+  # Python: Docstring style (pydocstyle)
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        name: pydocstyle
+        description: Check docstring conventions
+        files: ^backend/(?!tests)
+        exclude: __init__.py
+
+  # ──────────────────────────────────────────────────────────
+  # YAML: Format checking
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        name: yamllint
+        description: Lint YAML files
+        args: ['-d', '{extends: default, rules: {line-length: {max: 120}}}']
+
+# Configuration for specific hooks
+# ci:
+#   autofix_commit_msg: |
+#     [pre-commit.ci] Auto-fixes from pre-commit.com hooks
+#     for more information, see https://pre-commit.ci
+#   autofix_prs: true
+#   autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+#   autoupdate_schedule: weekly
+#   skip: [mypy]  # Skip in CI if too slow
+#   submodules: false

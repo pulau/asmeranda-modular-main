@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Streamlit legacy (UI cadangan, masih di-support)
+.streamlit/secrets.toml
+
+# Runtime artefacts
+app_errors.log
+*.log
+users.db
+data/
+models/*.pkl
+!models/_init_.py
+
+# Next.js
+.next/
+out/
+node_modules/
+
+# Environments
+.env
+.env.local
+.env.development
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Lock files
+*.pyc.[0-9]*
+
+# Build artefacts
+dist/
+build/
+*.spec
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+

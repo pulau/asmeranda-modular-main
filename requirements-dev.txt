@@ -1,0 +1,54 @@
+# Asmeranda Development & Testing Requirements
+# Install with: pip install -r requirements-dev.txt
+
+# ─── Testing Framework ──────────────────────────────────────
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+pytest-xdist>=3.3.0           # Parallel test execution
+pytest-timeout>=2.1.0         # Test timeout handling
+pytest-env>=0.8.2             # Environment variable fixtures
+
+# ─── Frontend Testing ───────────────────────────────────────
+vitest>=0.34.0
+@testing-library/react>=14.0.0
+@testing-library/jest-dom>=6.0.0
+@testing-library/user-event>=14.0.0
+jsdom>=22.0.0
+
+# ─── E2E Testing ────────────────────────────────────────────
+# playwright>=1.40.0           # Optional: for E2E tests later
+
+# ─── Code Quality & Linting ─────────────────────────────────
+black>=23.7.0
+isort>=5.12.0
+flake8>=6.0.0
+pylint>=2.17.0
+mypy>=1.4.0
+pylint-django>=2.5.3           # For Django/Streamlit compatibility
+
+# ─── Security Scanning ──────────────────────────────────────
+bandit>=1.7.5
+safety>=2.3.0
+pip-audit>=2.5.0
+
+# ─── API Testing & Contracts ───────────────────────────────
+schemathesis>=3.20.0
+fastapi-utils>=0.2.1           # Helpful FastAPI utilities
+
+# ─── Performance Testing ────────────────────────────────────
+# locust>=2.16.0               # Optional: for load testing
+
+# ─── Utilities ──────────────────────────────────────────────
+coverage>=7.2.0
+coverage-badge>=1.1.0
+pre-commit>=3.3.0
+pytest-env>=0.8.2
+
+# ─── Documentation ─────────────────────────────────────────
+sphinx>=7.0.0                  # Optional: for doc generation
+pytest-html>=3.2.0             # HTML test reports
+
+# Note: Also install requirements.txt and requirements-backend.txt:
+# pip install -r requirements.txt -r requirements-backend.txt -r requirements-dev.txt

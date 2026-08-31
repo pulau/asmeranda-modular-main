@@ -1,0 +1,56 @@
+# Azure deployment override file.
+#
+# This file is not the default runtime. The canonical runtime remains the stack
+# defined in docker-compose.yml. Azure-specific deployments may use this file as
+# an image-based variant when prebuilt images are already available in ACR.
+#
+# Recommended usage:
+#   docker compose -f docker-compose.yml -f docker-compose.azure.yml config
+#
+# or, for direct Azure image deployment after pushing to ACR:
+#   docker compose -f docker-compose.azure.yml up -d
+
+services:
+  backend:
+    image: ${ACR_NAME:-asmeranda}.azurecr.io/asmeranda-backend:latest
+    pull_policy: always
+    environment:
+      - ASMERANDA_HOST=0.0.0.0
+      - ASMERANDA_PORT=8000
+      - ASMERANDA_DATA_DIR=/app/data
+      - ASMERANDA_LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+    volumes:
+      - asmeranda-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - asmeranda-net
+
+  frontend:
+    image: ${ACR_NAME:-asmeranda}.azurecr.io/asmeranda-frontend:latest
+    pull_policy: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_API_BASE=http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - asmeranda-net
+
+volumes:
+  asmeranda-data:
+    driver: local
+
+networks:
+  asmeranda-net:
+    driver: bridge
