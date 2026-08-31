@@ -150,7 +150,11 @@ def create_app() -> FastAPI:
 
     # Trusted Host Middleware (allow configured hosts)
     if settings.allowed_hosts and settings.allowed_hosts != ["*"]:
-        app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+        # Docker health checks use localhost and must not be rejected when the
+        # public host list is intentionally restricted in production.
+        internal_hosts = ["localhost", "127.0.0.1", "backend", "asmeranda-backend"]
+        allowed_hosts = list(dict.fromkeys([*settings.allowed_hosts, *internal_hosts]))
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
     # CORS - safe configured origins
     app.add_middleware(
