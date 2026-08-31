@@ -23,7 +23,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements-backend.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN python -m pip install --no-cache-dir --retries 10 --timeout 120 \
+        --index-url https://pypi.org/simple \
+        -r /tmp/requirements.txt
 
 COPY . /app
 RUN mkdir -p /app/data
